@@ -70,7 +70,7 @@ svg { flex: none; }
 .app { height: 100vh; display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 12px; max-width: 2200px; margin: 0 auto; }
 
 /* ---------- Board ---------- */
-.board { flex: none; background: var(--board); color: var(--board-ink); border-radius: 6px; display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-height: 42vh; min-height: 200px; box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .6); }
+.board { flex: none; background: var(--board); color: var(--board-ink); border-radius: 6px; display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-height: calc(71vh - 40px); min-height: 200px; box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .6); }
 .board * { scrollbar-color: var(--board-rule) transparent; }
 .board :focus-visible { outline-color: var(--lamp); }
 .b-head { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; padding: 18px 24px 14px; border-bottom: 1px solid var(--board-rule); }
