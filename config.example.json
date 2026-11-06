@@ -1,0 +1,10 @@
+{
+  "owners": [],
+  "port": 4747,
+  "intervalSeconds": 10,
+  "excludeRepos": [],
+  "includeArchived": false,
+  "sealLabels": [
+    "security"
+  ]
+}

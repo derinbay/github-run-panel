@@ -1,0 +1,24 @@
+{
+  "name": "github-run-panel",
+  "version": "1.0.0",
+  "description": "A one-page live view of running and queued GitHub Actions jobs plus open pull requests and issues across your organisations.",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/derinbay/github-run-panel.git"
+  },
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "start": "node server.mjs --open",
+    "demo": "node server.mjs --demo --open",
+    "install-service": "node service.mjs install",
+    "uninstall-service": "node service.mjs uninstall",
+    "start-service": "node service.mjs start",
+    "stop": "node service.mjs stop",
+    "status": "node service.mjs status"
+  }
+}

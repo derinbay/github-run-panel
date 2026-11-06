@@ -1,0 +1,788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run panel</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23141310'/%3E%3Crect x='6' y='9' width='20' height='4' fill='%23f4f1ea'/%3E%3Crect x='6' y='15' width='13' height='4' fill='%23f4f1ea'/%3E%3Crect x='21' y='17' width='7' height='7' fill='%23c23523' transform='rotate(-8 24.5 20.5)'/%3E%3C/svg%3E">
+<style>
+@font-face { font-family: Archivo; src: url(/fonts/archivo-latin.woff2) format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: Archivo; src: url(/fonts/archivo-latin-ext.woff2) format('woff2'); font-weight: 100 900; font-stretch: 62% 125%; font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'JetBrains Mono'; src: url(/fonts/jbmono-latin.woff2) format('woff2'); font-weight: 400 700; font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'JetBrains Mono'; src: url(/fonts/jbmono-latin-ext.woff2) format('woff2'); font-weight: 400 700; font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+/* Paper (ledger) and departure board. Colour only marks state; the seal red is the one reserved colour. */
+:root {
+  color-scheme: light;
+  --paper: #f4f1ea; --grid: #e7e1d4; --sheet: #fbf9f4; --sheet-hover: #ffffff;
+  --ink: #22201c; --muted: #685f52; --rule: #cfc7b6; --rule-soft: #e4ddcf;
+  --seal: #c23523; --seal-wash: rgba(194, 53, 35, .06);
+  --pass: #4c6a2a; --run: #2f4a7a; --focus: #2f4a7a;
+  --board: #141310; --board-2: #1f1d19; --board-rule: #34312b; --board-ink: #f4f1ea; --board-muted: #a8a196;
+  --lamp: #ffcf33; --plate: #f4f1ea; --plate-ink: #141310;
+  --shadow: 0 1px 0 var(--rule), 0 6px 18px -10px rgba(34, 32, 28, .35);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #1a1916; --grid: #22201c; --sheet: #201e1b; --sheet-hover: #292723;
+    --ink: #ece6d8; --muted: #a49d8f; --rule: #3b3832; --rule-soft: #2e2b26;
+    --seal: #e4553f; --seal-wash: rgba(228, 85, 63, .08);
+    --pass: #9bb86a; --run: #93a9d6; --focus: #93a9d6;
+    --board: #0d0c0b; --board-2: #181714; --board-rule: #2e2b26; --board-ink: #ece6d8; --board-muted: #a49d8f;
+    --plate: #ece6d8; --shadow: 0 1px 0 var(--rule), 0 6px 18px -10px rgba(0, 0, 0, .7);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #1a1916; --grid: #22201c; --sheet: #201e1b; --sheet-hover: #292723;
+  --ink: #ece6d8; --muted: #a49d8f; --rule: #3b3832; --rule-soft: #2e2b26;
+  --seal: #e4553f; --seal-wash: rgba(228, 85, 63, .08);
+  --pass: #9bb86a; --run: #93a9d6; --focus: #93a9d6;
+  --board: #0d0c0b; --board-2: #181714; --board-rule: #2e2b26; --board-ink: #ece6d8; --board-muted: #a49d8f;
+  --plate: #ece6d8; --shadow: 0 1px 0 var(--rule), 0 6px 18px -10px rgba(0, 0, 0, .7);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font: 400 14px/1.45 Archivo, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+::selection { background: var(--seal); color: #fff; }
+* { scrollbar-width: thin; scrollbar-color: var(--rule) transparent; }
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+svg { flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.app { height: 100vh; display: flex; flex-direction: column; gap: 16px; padding: 20px 24px 12px; max-width: 2200px; margin: 0 auto; }
+
+/* ---------- Board ---------- */
+.board { flex: none; background: var(--board); color: var(--board-ink); border-radius: 6px; display: grid; grid-template-rows: auto auto minmax(0, 1fr); max-height: 42vh; min-height: 200px; box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .6); }
+.board * { scrollbar-color: var(--board-rule) transparent; }
+.board :focus-visible { outline-color: var(--lamp); }
+.b-head { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: end; padding: 18px 24px 14px; border-bottom: 1px solid var(--board-rule); }
+.brand { display: flex; align-items: baseline; gap: 14px; margin-bottom: 4px; }
+.brand-name { font-weight: 700; font-stretch: 80%; font-size: 15px; letter-spacing: .02em; }
+.brand-scope { color: var(--board-muted); font-size: 13px; }
+h1 { margin: 0; font-weight: 700; font-stretch: 72%; font-size: 40px; line-height: 1.02; letter-spacing: -.005em; }
+.sub { margin: 6px 0 0; color: var(--board-muted); font-size: 14px; max-width: 90ch; }
+.b-side { display: grid; justify-items: end; gap: 10px; }
+.clock { font-size: 40px; font-weight: 500; line-height: 1; letter-spacing: -.02em; }
+.clock .s { color: var(--board-muted); }
+.tools { display: flex; align-items: center; gap: 10px; }
+.live { display: inline-flex; align-items: center; gap: 7px; color: var(--board-muted); font-size: 13px; }
+.live i { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--board-muted); }
+.live.ok i { background: var(--lamp); border-color: var(--lamp); }
+.live.off { color: var(--seal); }
+.live.off i { border-color: var(--seal); }
+.btn, .seg button { font: 500 13px/1 Archivo, sans-serif; color: var(--board-ink); background: transparent; border: 1px solid var(--board-rule); border-radius: 4px; padding: 7px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+.btn:hover, .seg button:hover { background: var(--board-2); }
+.seg { display: inline-flex; }
+.seg button { border-radius: 0; margin-left: -1px; }
+.seg button:first-child { border-radius: 4px 0 0 4px; margin-left: 0; }
+.seg button:last-child { border-radius: 0 4px 4px 0; }
+.seg button[aria-pressed="true"] { background: var(--board-ink); color: var(--board); border-color: var(--board-ink); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 0 24px; }
+.filters:not(:empty) { padding: 10px 24px; border-bottom: 1px solid var(--board-rule); }
+.frow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.flabel { color: var(--board-muted); font-size: 12px; margin-right: 2px; }
+.chip { font: 500 12.5px/1 Archivo, sans-serif; color: var(--board-ink); background: transparent; border: 1px solid var(--board-rule); border-radius: 3px; padding: 5px 8px; cursor: pointer; }
+.chip b { font-family: 'JetBrains Mono', monospace; font-weight: 500; color: var(--board-muted); margin-left: 6px; }
+.chip:hover { background: var(--board-2); }
+.chip[aria-pressed="true"] { background: var(--plate); color: var(--plate-ink); border-color: var(--plate); }
+.chip[aria-pressed="true"] b { color: var(--plate-ink); }
+
+.departures { overflow: auto; min-height: 0; }
+.departures table { width: 100%; border-collapse: collapse; }
+.departures th { position: sticky; top: 0; background: var(--board); text-align: left; font-weight: 500; font-size: 12px; color: var(--board-muted); padding: 9px 12px 7px; border-bottom: 1px solid var(--board-rule); }
+.departures td { padding: 8px 12px; border-bottom: 1px solid var(--board-rule); vertical-align: middle; }
+.departures tr:last-child td { border-bottom: 0; }
+.departures tbody tr:hover td { background: var(--board-2); }
+.departures th:first-child, .departures td:first-child { padding-left: 24px; width: 34px; }
+.departures th:last-child, .departures td:last-child { padding-right: 24px; text-align: right; }
+.d-repo { font-weight: 600; font-stretch: 85%; font-size: 16px; white-space: nowrap; }
+.d-job a.job { font-weight: 600; font-size: 15px; }
+.d-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--board-muted); font-size: 12.5px; margin-top: 1px; }
+.d-meta span, .d-meta a { display: inline-flex; align-items: center; gap: 5px; }
+.d-time { font-size: 22px; font-weight: 500; letter-spacing: -.02em; white-space: nowrap; }
+.d-time.wait-t { color: var(--board-muted); }
+.lamp { display: inline-block; width: 10px; height: 10px; }
+.lamp.run { background: var(--lamp); }
+.lamp.wait { border: 1.5px solid var(--board-muted); }
+.plate { display: inline-flex; align-items: center; gap: 8px; background: var(--plate); color: var(--plate-ink); border-radius: 3px; padding: 4px 9px 4px 4px; font-weight: 700; font-stretch: 78%; font-size: 14px; text-transform: uppercase; letter-spacing: .03em; white-space: nowrap; max-width: 280px; }
+.plate span { overflow: hidden; text-overflow: ellipsis; }
+.plate i { width: 16px; height: 16px; border-radius: 2px; background: hsl(var(--h) 55% 42%); flex: none; }
+.plate.hosted { background: transparent; color: var(--board-ink); border: 1px solid var(--board-muted); padding-left: 9px; }
+.plate.hosted i { display: none; }
+.waiting { color: var(--board-muted); font-size: 13px; }
+.labels { display: block; color: var(--board-muted); font-size: 12px; font-family: 'JetBrains Mono', monospace; }
+.departures .d-sep td { padding: 6px 24px 4px; font-size: 12px; color: var(--board-muted); background: var(--board); text-align: left; }
+.b-empty { padding: 22px 24px; color: var(--board-muted); font-size: 15px; }
+
+/* ---------- Alerts ---------- */
+.alert { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; border: 1px solid var(--seal); background: var(--sheet); color: var(--ink); border-radius: 4px; padding: 10px 14px; }
+.alert strong { color: var(--seal); font-weight: 700; }
+#alert:empty, #workAlert:empty { display: none; }
+.board .alert { margin: 12px 24px; background: var(--board-2); color: var(--board-ink); }
+
+/* ---------- Ledgers ---------- */
+.ledgers { flex: 1 1 0; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; min-height: 0; }
+.ledger { background: var(--sheet); border: 1px solid var(--rule); border-radius: 4px; display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.l-head { display: flex; align-items: baseline; gap: 12px; padding: 14px 18px 10px; border-bottom: 3px double var(--rule); }
+.l-head h2 { margin: 0; font-weight: 700; font-stretch: 75%; font-size: 26px; line-height: 1; }
+.l-count { font-family: 'JetBrains Mono', monospace; font-size: 20px; font-weight: 500; }
+.l-note { margin-left: auto; color: var(--muted); font-size: 13px; }
+.l-note b { color: var(--seal); font-weight: 600; }
+.l-body { overflow: auto; min-height: 0; }
+.l-body ol { list-style: none; margin: 0; padding: 0; }
+.entry { display: grid; align-items: center; gap: 14px; padding: 9px 18px; border-bottom: 1px solid var(--rule-soft); position: relative; }
+.entry:hover { background: var(--sheet-hover); box-shadow: var(--shadow); z-index: 1; }
+.pr .entry { grid-template-columns: minmax(0, 1fr) 100px 132px 100px 44px; }
+.is .entry { grid-template-columns: minmax(0, 1fr) 36px 100px 44px; }
+.e-meta .e-ref { flex: none; font-size: 12px; color: var(--muted); }
+.e-ref b { color: var(--ink); font-weight: 600; }
+.e-title { min-width: 0; }
+.e-title a { display: block; font-weight: 600; font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.e-meta { display: flex; gap: 12px; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; }
+.e-meta span { display: inline-flex; align-items: center; gap: 4px; flex: none; white-space: nowrap; }
+.e-meta span:last-child { flex-shrink: 1; min-width: 0; overflow: hidden; }
+.e-meta .mono { font-size: 11.5px; }
+.state { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+.st-pass { color: var(--pass); }
+.st-fail { color: var(--seal); }
+.st-run { color: var(--run); }
+.st-none, .st-quiet { color: var(--muted); }
+.e-age { text-align: right; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.e-com { display: inline-flex; gap: 4px; align-items: center; color: var(--muted); font-size: 12.5px; }
+.draft .e-title a { color: var(--muted); font-weight: 500; }
+.sealed { background: var(--seal-wash); }
+.sealed:hover { background: var(--sheet-hover); }
+.more { padding: 10px 18px; color: var(--muted); font-size: 12.5px; }
+
+/* Seal: the panel's one signature */
+.seal { justify-self: center; display: inline-block; border: 1.5px solid var(--seal); color: var(--seal); border-radius: 3px; padding: 4px 8px 3px; font-weight: 800; font-stretch: 70%; font-size: 13px; letter-spacing: .06em; line-height: 1.1; text-transform: uppercase; transform: rotate(-4deg); box-shadow: inset 0 0 0 2px transparent, inset 0 0 0 3px var(--seal); white-space: nowrap; }
+.entry:nth-child(even) .seal { transform: rotate(3deg); }
+@media (prefers-reduced-motion: no-preference) {
+  .seal.fresh { animation: stamp .42s cubic-bezier(.2, .9, .3, 1.25) both; }
+  .entry:nth-child(even) .seal.fresh { animation-name: stamp-r; }
+  @keyframes stamp { from { opacity: 0; transform: scale(1.7) rotate(-11deg); } to { opacity: 1; transform: scale(1) rotate(-4deg); } }
+  @keyframes stamp-r { from { opacity: 0; transform: scale(1.7) rotate(10deg); } to { opacity: 1; transform: scale(1) rotate(3deg); } }
+}
+
+.l-empty { display: grid; place-content: center; justify-items: center; gap: 6px; height: 100%; min-height: 160px; padding: 24px; text-align: center; color: var(--muted); }
+.l-empty strong { color: var(--ink); font-weight: 700; font-stretch: 80%; font-size: 22px; }
+.l-empty span { max-width: 42ch; }
+
+.foot { flex: none; align-items: baseline; display: flex; flex-wrap: wrap; gap: 4px 22px; color: var(--muted); font-size: 12px; }
+.foot span { background: var(--paper); }
+
+/* Narrow windows: the page scrolls and columns stack */
+@media (max-width: 1280px), (max-height: 760px) {
+  .app { height: auto; min-height: 100vh; }
+  .ledgers { flex: none; }
+  .board { max-height: none; }
+  .ledger { max-height: 75vh; }
+}
+@media (max-width: 1280px) {
+  .ledgers { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) {
+  .app { padding: 12px 16px; }
+  .b-head { grid-template-columns: 1fr; padding: 16px; }
+  .b-side { justify-items: start; }
+  h1 { font-size: 30px; }
+  .clock { font-size: 28px; }
+  .tools { flex-wrap: wrap; }
+  .departures th:first-child, .departures td:first-child { padding-left: 16px; }
+  .departures th:last-child, .departures td:last-child { padding-right: 16px; }
+  .d-runner-col { display: none; }
+  .pr .entry, .is .entry { grid-template-columns: minmax(0, 1fr) auto auto; padding: 10px 14px; gap: 6px 10px; }
+  .e-rev, .e-com { display: none !important; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="board" aria-label="GitHub Actions">
+    <div class="b-head">
+      <div>
+        <div class="brand"><span class="brand-name" data-t="appName">Run panel</span><span class="brand-scope" id="scope"></span></div>
+        <h1 id="headline" data-t="scanning">Scanning GitHub</h1>
+        <p class="sub" id="subline" data-t="firstScan">The first scan can take a few seconds.</p>
+      </div>
+      <div class="b-side">
+        <div class="clock mono" id="clock" aria-hidden="true">--:--</div>
+        <div class="tools">
+          <span class="live" id="live" role="status"><i></i><span id="liveText" data-t="connecting">Connecting</span></span>
+          <button class="btn" id="refresh" type="button"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9"/><path d="M13.5 2.5v3h-3"/></svg><span data-t="refresh">Refresh</span></button>
+          <div class="seg" role="group" aria-label="Theme" data-t-label="theme">
+            <button type="button" data-theme-set="auto" data-t="themeAuto">Auto</button>
+            <button type="button" data-theme-set="light" data-t="themeLight">Light</button>
+            <button type="button" data-theme-set="dark" data-t="themeDark">Dark</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="filters" id="filters"></div>
+    <div class="departures" id="board"></div>
+  </section>
+
+  <div id="workAlert"></div>
+
+  <main class="ledgers">
+    <section class="ledger pr" aria-labelledby="h-pr">
+      <div class="l-head"><h2 id="h-pr" data-t="prs">Pull requests</h2><span class="l-count" id="prCount"></span><span class="l-note" id="prNote"></span></div>
+      <div class="l-body" id="prList"></div>
+    </section>
+    <section class="ledger is" aria-labelledby="h-is">
+      <div class="l-head"><h2 id="h-is" data-t="issues">Issues</h2><span class="l-count" id="isCount"></span><span class="l-note" id="isNote"></span></div>
+      <div class="l-body" id="isList"></div>
+    </section>
+  </main>
+
+  <footer class="foot" id="foot"></footer>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const safeUrl = (u) => (typeof u === 'string' && /^https:\/\/github\.com\//.test(u) ? esc(u) : '#');
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { localStorage.setItem(k, v); } catch { /* the preference is not kept, nothing else breaks */ } },
+  };
+
+  // ---------- Language: Turkish when the browser prefers it, English otherwise ----------
+  const STRINGS = {
+    tr: {
+      appName: 'Run paneli',
+      scanning: 'GitHub taranıyor',
+      firstScan: 'İlk tarama birkaç saniye sürebilir.',
+      connecting: 'Bağlanıyor',
+      disconnected: 'Bağlantı kesildi',
+      liveAgo: (s) => `Canlı, ${s} sn önce`,
+      refresh: 'Yenile',
+      theme: 'Tema', themeAuto: 'Otomatik', themeLight: 'Açık', themeDark: 'Koyu',
+      prs: "Pull request'ler", issues: "Issue'lar",
+      ageUnits: ['dk', 'sa', 'g', 'ay'],
+      assigning: 'Runner atanıyor',
+      awaitingApproval: 'Onay bekleniyor',
+      awaitingRunner: 'Runner bekleniyor',
+      jobsDone: (d, t) => `${d} / ${t} job bitti`,
+      noJobsYet: "Job'lar henüz oluşmadı",
+      running: 'Çalışıyor', queued: 'Sırada',
+      boardEmptyFiltered: 'Bu filtreyle çalışan ya da sıradaki job yok.',
+      boardEmpty: 'Tabela boş. Bir workflow tetiklendiğinde job burada belirir.',
+      colStatus: 'Durum', colRepo: 'Repo', colJob: 'Job', colRunner: 'Runner', colTime: 'Süre',
+      queuedSep: (n) => `Sırada, ${n} job`,
+      prSeals: { ci: 'CI kırık', changes: 'Değişiklik', approved: 'Onay' },
+      labelSeals: { security: 'Güvenlik', decision: 'Karar' },
+      sealAria: (s) => `Mühür: ${s}`,
+      ciPass: 'CI geçti', ciFailN: (n) => `${n} kırık`, ciFail: 'Kırık', ciRun: 'Çalışıyor', ciNone: 'CI yok',
+      draft: 'Taslak', approved: 'Onaylı', stale: "Onay eski commit'te", changes: 'Değişiklik istendi', requested: 'İnceleme istendi', pending: 'İncelenmedi',
+      lastUpdate: (d) => `Son güncelleme ${d}`,
+      assignee: (a) => `atanan ${a}`,
+      comments: (n) => `${n} yorum`,
+      prNote: { ci: (n) => `${n} CI kırık`, changes: (n) => `${n} değişiklik bekliyor`, approved: (n) => `${n} birleşmeye hazır` },
+      bugs: (n) => `${n} hata`,
+      loadingTitle: 'Taranıyor', loadingPrs: "Açık PR'lar GitHub'dan alınıyor.", loadingIssues: "Açık issue'lar GitHub'dan alınıyor.",
+      noDataTitle: 'Veri yok', noDataPrs: "Yukarıdaki uyarıdaki adım tamamlanınca PR'lar burada görünür.", noDataIssues: "Yukarıdaki uyarıdaki adım tamamlanınca issue'lar burada görünür.",
+      more: (n, what, shown) => `${n} ${what} daha var, en önemli ${shown} tanesi gösteriliyor.`,
+      prWord: 'PR', issueWord: 'issue',
+      noPrsTitle: 'Açık PR yok', noPrs: 'Bir PR açıldığında CI ve inceleme durumuyla burada görünür.',
+      noIssuesTitle: 'Açık issue yok', noIssues: 'Tüm repolarda açık issue kalmadı.',
+      keptScan: (t) => `Son başarılı tarama (${t}) gösteriliyor.`,
+      workErrors: {
+        no_token: ["PR ve issue'lar alınamadı: GitHub oturumu yok.", 'Terminalde gh auth login çalıştır.'],
+        bad_token: ["PR ve issue'lar alınamadı: token geçersiz.", 'gh auth login ile yeniden giriş yap.'],
+        network: ["PR ve issue'lar için GitHub'a ulaşılamıyor.", 'Bağlantıyı kontrol et.'],
+        rate_limited: ['GraphQL limiti doldu.', ''],
+        forbidden: ['GitHub arama erişimi reddedildi.', 'gh hesabının organizasyon erişimini kontrol et.'],
+      },
+      workFailed: 'PR ve issue taraması başarısız.',
+      resetsAt: (t) => `${t} civarında sıfırlanır.`,
+      unreachableHead: 'Panel sunucusuna bağlanılamıyor',
+      unreachableSub: 'Sunucu yeniden başlayınca bu sayfa kendiliğinden toparlanır.',
+      unreachable: ['Panel sunucusuna ulaşılamıyor.', 'Sunucuyu npm start ya da npm run start-service ile yeniden başlat, sayfa kendiliğinden toparlanır.'],
+      noDataHead: 'GitHub verisi alınamıyor',
+      headBoth: (r, q) => `${r} job çalışıyor, ${q} job sırada`,
+      headRunning: (r) => `${r} job çalışıyor, sırada bekleyen yok`,
+      headQueued: (q) => `Çalışan job yok, ${q} job sırada`,
+      headIdle: 'Şu an çalışan ya da sıradaki job yok',
+      reposScanned: (n) => `${n} repo taranıyor.`,
+      busyRunners: (l) => `Meşgul runner: ${l}.`,
+      noDataSub: 'Uyarıdaki adımı uygula; veri gelince burada görünür.',
+      filterRunner: 'Runner', filterRepo: 'Repo',
+      titleCounts: (r, q) => `(${r} çalışıyor, ${q} sırada) `,
+      restQuota: (r, l) => `REST hakkı ${r} / ${l}`,
+      gqlQuota: (r, l) => `GraphQL hakkı ${r} / ${l}`,
+      actionsScan: (s, i) => `Actions taraması ${s} sn, ${i} saniyede bir`,
+      workScan: (s) => `PR ve issue taraması ${s} sn, dakikada bir`,
+      skipped: (n) => `${n} repo atlandı (Actions kapalı ya da erişim yok)`,
+      errors: {
+        no_token: ['GitHub oturumu bulunamadı.', 'Terminalde gh auth login çalıştır, panel birkaç saniye içinde toparlanır.'],
+        bad_token: ["GitHub token'ı geçersiz.", 'gh auth login ile yeniden giriş yap.'],
+        network: ["GitHub'a ulaşılamıyor.", 'İnternet bağlantını kontrol et. Son başarılı tarama gösteriliyor.'],
+        rate_limited: ['GitHub API limiti doldu.', 'O zamana kadar son başarılı tarama gösterilir.'],
+      },
+      scanFailed: 'Tarama başarısız.',
+    },
+    en: {
+      appName: 'Run panel',
+      scanning: 'Scanning GitHub',
+      firstScan: 'The first scan can take a few seconds.',
+      connecting: 'Connecting',
+      disconnected: 'Disconnected',
+      liveAgo: (s) => `Live, ${s} s ago`,
+      refresh: 'Refresh',
+      theme: 'Theme', themeAuto: 'Auto', themeLight: 'Light', themeDark: 'Dark',
+      prs: 'Pull requests', issues: 'Issues',
+      ageUnits: ['m', 'h', 'd', 'mo'],
+      assigning: 'Assigning runner',
+      awaitingApproval: 'Awaiting approval',
+      awaitingRunner: 'Waiting for a runner',
+      jobsDone: (d, t) => `${d} of ${t} jobs done`,
+      noJobsYet: 'No jobs created yet',
+      running: 'Running', queued: 'Queued',
+      boardEmptyFiltered: 'No running or queued jobs match this filter.',
+      boardEmpty: 'The board is empty. Jobs appear here when a workflow starts.',
+      colStatus: 'Status', colRepo: 'Repo', colJob: 'Job', colRunner: 'Runner', colTime: 'Time',
+      queuedSep: (n) => `Queued, ${n} ${n === 1 ? 'job' : 'jobs'}`,
+      prSeals: { ci: 'CI broken', changes: 'Changes', approved: 'Approved' },
+      labelSeals: {},
+      sealAria: (s) => `Seal: ${s}`,
+      ciPass: 'CI passed', ciFailN: (n) => `${n} failed`, ciFail: 'Failed', ciRun: 'Running', ciNone: 'No CI',
+      draft: 'Draft', approved: 'Approved', stale: 'Approved an older commit', changes: 'Changes requested', requested: 'Review requested', pending: 'Not reviewed',
+      lastUpdate: (d) => `Last updated ${d}`,
+      assignee: (a) => `assigned to ${a}`,
+      comments: (n) => `${n} ${n === 1 ? 'comment' : 'comments'}`,
+      prNote: { ci: (n) => `${n} CI broken`, changes: (n) => `${n} awaiting changes`, approved: (n) => `${n} ready to merge` },
+      bugs: (n) => `${n} ${n === 1 ? 'bug' : 'bugs'}`,
+      loadingTitle: 'Scanning', loadingPrs: 'Fetching open pull requests from GitHub.', loadingIssues: 'Fetching open issues from GitHub.',
+      noDataTitle: 'No data', noDataPrs: 'Pull requests appear here once the step in the alert above is done.', noDataIssues: 'Issues appear here once the step in the alert above is done.',
+      more: (n, what, shown) => `${n} more ${what}; showing the ${shown} most important.`,
+      prWord: 'pull requests', issueWord: 'issues',
+      noPrsTitle: 'No open pull requests', noPrs: 'New pull requests appear here with their CI and review state.',
+      noIssuesTitle: 'No open issues', noIssues: 'No repository has an open issue.',
+      keptScan: (t) => `Showing the last successful scan (${t}).`,
+      workErrors: {
+        no_token: ['Could not load pull requests and issues: no GitHub session.', 'Run gh auth login in a terminal.'],
+        bad_token: ['Could not load pull requests and issues: the token was rejected.', 'Sign in again with gh auth login.'],
+        network: ['Cannot reach GitHub for pull requests and issues.', 'Check your connection.'],
+        rate_limited: ['GraphQL rate limit reached.', ''],
+        forbidden: ['GitHub search access was denied.', "Check the gh account's access to the organisation."],
+      },
+      workFailed: 'The pull request and issue scan failed.',
+      resetsAt: (t) => `It resets around ${t}.`,
+      unreachableHead: 'Cannot connect to the panel server',
+      unreachableSub: 'This page recovers on its own once the server is back.',
+      unreachable: ['The panel server is not reachable.', 'Start it again with npm start or npm run start-service; the page recovers on its own.'],
+      noDataHead: 'Cannot load GitHub data',
+      headBoth: (r, q) => `${r} ${r === 1 ? 'job' : 'jobs'} running, ${q} queued`,
+      headRunning: (r) => `${r} ${r === 1 ? 'job' : 'jobs'} running, none queued`,
+      headQueued: (q) => `Nothing running, ${q} ${q === 1 ? 'job' : 'jobs'} queued`,
+      headIdle: 'No running or queued jobs',
+      reposScanned: (n) => `Scanning ${n} ${n === 1 ? 'repository' : 'repositories'}.`,
+      busyRunners: (l) => `Busy: ${l}.`,
+      noDataSub: 'Follow the step in the alert; data appears here once it arrives.',
+      filterRunner: 'Runner', filterRepo: 'Repo',
+      titleCounts: (r, q) => `(${r} running, ${q} queued) `,
+      restQuota: (r, l) => `REST quota ${r} / ${l}`,
+      gqlQuota: (r, l) => `GraphQL quota ${r} / ${l}`,
+      actionsScan: (s, i) => `Actions scan ${s} s, every ${i} s`,
+      workScan: (s) => `Pull request and issue scan ${s} s, every minute`,
+      skipped: (n) => `${n} ${n === 1 ? 'repository' : 'repositories'} skipped (Actions disabled or no access)`,
+      errors: {
+        no_token: ['No GitHub session found.', 'Run gh auth login in a terminal; the panel recovers within seconds.'],
+        bad_token: ['The GitHub token was rejected.', 'Sign in again with gh auth login.'],
+        network: ['Cannot reach GitHub.', 'Check your internet connection. Showing the last successful scan.'],
+        rate_limited: ['GitHub API rate limit reached.', 'Until then the last successful scan is shown.'],
+      },
+      scanFailed: 'The scan failed.',
+    },
+  };
+  const asked = new URLSearchParams(location.search).get('lang'); // ?lang=en or ?lang=tr overrides the browser
+  const LANG = STRINGS[asked] ? asked : /^tr\b/i.test((navigator.languages && navigator.languages[0]) || navigator.language || '') ? 'tr' : 'en';
+  const L = STRINGS[LANG];
+  const LOCALE = LANG === 'tr' ? 'tr-TR' : 'en-US';
+  document.documentElement.lang = LANG;
+  for (const el of document.querySelectorAll('[data-t]')) el.textContent = L[el.dataset.t];
+  for (const el of document.querySelectorAll('[data-t-label]')) el.setAttribute('aria-label', L[el.dataset.tLabel]);
+  const num = new Intl.NumberFormat(LOCALE);
+  const secs = new Intl.NumberFormat(LOCALE, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+  let data = null;
+  let serverOffset = 0; // server clock minus browser clock
+  let lastOk = 0;
+  let unreachable = false;
+  const filter = { runner: null, repo: null };
+  let drawn = '';
+  let drawnWork = '';
+  const seenSeals = new Set();
+
+  // ---------- Helpers ----------
+  const hue = (s) => { let h = 7; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+  // GitHub-hosted runner names differ per job ("GitHub Actions 1000012345"), so they share one key.
+  const runnerKey = (it) => (it.runner ? (it.selfHosted ? it.runner : 'GitHub-hosted') : null);
+  const pad = (n) => String(n).padStart(2, '0');
+  const clock = (sec) => {
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    return h ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+  };
+  const hhmm = (iso) => new Date(iso).toLocaleTimeString(LOCALE, { hour: '2-digit', minute: '2-digit' });
+  const nowMs = () => Date.now() + serverOffset;
+  const age = (iso) => {
+    const [mi, ho, da, mo] = L.ageUnits;
+    const m = Math.max(0, Math.floor((nowMs() - Date.parse(iso)) / 60000));
+    if (m < 60) return `${m} ${mi}`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h} ${ho}`;
+    const d = Math.floor(h / 24);
+    return d < 60 ? `${d} ${da}` : `${Math.floor(d / 30)} ${mo}`;
+  };
+  const longDate = (iso) => new Date(iso).toLocaleString(LOCALE, { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+  const shortRepo = (repo, multiOwner) => (multiOwner ? repo : repo.split('/')[1]);
+
+  // ---------- Icons (one stroke width) ----------
+  const svg = (body, size = 14) => `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+  const icons = {
+    branch: svg('<circle cx="4.5" cy="3.5" r="1.7"/><circle cx="4.5" cy="12.5" r="1.7"/><circle cx="11.5" cy="5.5" r="1.7"/><path d="M4.5 5.2v5.6M11.5 7.2c0 2.6-3 2.2-7 3.6"/>', 12),
+    pass: svg('<circle cx="8" cy="8" r="6.3"/><path d="m5.3 8.2 1.9 1.9 3.6-3.9"/>'),
+    fail: svg('<circle cx="8" cy="8" r="6.3"/><path d="m5.8 5.8 4.4 4.4M10.2 5.8l-4.4 4.4"/>'),
+    run: svg('<circle cx="8" cy="8" r="6.3" opacity=".35"/><path d="M8 1.7a6.3 6.3 0 0 1 6.3 6.3"/><circle cx="8" cy="8" r="1.4" fill="currentColor" stroke="none"/>'),
+    none: svg('<circle cx="8" cy="8" r="6.3" stroke-dasharray="2.2 2.4"/>'),
+    comment: svg('<path d="M2.5 3.5h11v7.2H8l-3 2.6v-2.6H2.5z"/>', 13),
+    person: svg('<circle cx="8" cy="5.5" r="2.6"/><path d="M3 13.5c.7-2.5 2.7-3.8 5-3.8s4.3 1.3 5 3.8"/>', 12),
+    empty: svg('<rect x="2" y="3" width="12" height="10" rx="1"/><path d="M2 9h3.5l1 1.6h3l1-1.6H14"/>', 22),
+  };
+
+  // ---------- Actions board ----------
+  function runnerCell(it) {
+    if (it.kind === 'running') {
+      if (!it.runner) return `<span class="waiting">${esc(L.assigning)}</span>`;
+      if (!it.selfHosted) return `<span lang="en" class="plate hosted" title="${esc(it.runner)}"><i></i><span>GitHub-hosted</span></span>`;
+      return `<span lang="en" class="plate" style="--h:${hue(it.runner)}" title="${esc(it.runnerGroup || it.runner)}"><i></i><span>${esc(it.runner)}</span></span>`;
+    }
+    const lead = it.waitingApproval ? L.awaitingApproval : L.awaitingRunner;
+    const labels = it.labels.length ? `<span class="labels">${esc(it.labels.join(' '))}</span>` : '';
+    return `<span class="waiting">${esc(lead)}</span>${labels}`;
+  }
+
+  function depRow(it, multiOwner) {
+    const running = it.kind === 'running';
+    const jobLink = it.job
+      ? `<a class="job" href="${safeUrl(it.jobUrl)}" target="_blank" rel="noopener">${esc(it.job)}</a>`
+      : `<a class="job" href="${safeUrl(it.runUrl)}" target="_blank" rel="noopener">${esc(it.workflow)}</a>`;
+    const progress = it.job && it.runTotal > 1 ? `<span>${esc(L.jobsDone(it.runDone, it.runTotal))}</span>` : '';
+    const noJobs = it.job ? '' : `<span>${esc(L.noJobsYet)}</span>`;
+    const branch = it.branch ? `<span>${icons.branch}${esc(it.branch)}</span>` : '';
+    return `<tr>
+      <td><span class="lamp ${running ? 'run' : 'wait'}" role="img" aria-label="${esc(running ? L.running : L.queued)}"></span></td>
+      <td class="d-repo"><a href="${safeUrl(it.repoUrl)}" target="_blank" rel="noopener">${esc(shortRepo(it.repo, multiOwner))}</a></td>
+      <td class="d-job">${jobLink}<div class="d-meta"><a href="${safeUrl(it.runUrl)}" target="_blank" rel="noopener">${esc(it.workflow)} #${esc(it.runNumber)}</a>${branch}${progress}${noJobs}</div></td>
+      <td class="d-runner-col">${runnerCell(it)}</td>
+      <td><span class="d-time mono ${running ? '' : 'wait-t'}" data-since="${esc(it.since)}">--:--</span></td>
+    </tr>`;
+  }
+
+  function departures(running, queued, multiOwner, filtered) {
+    if (!running.length && !queued.length) {
+      return `<div class="b-empty">${esc(filtered ? L.boardEmptyFiltered : L.boardEmpty)}</div>`;
+    }
+    const head = `<thead><tr><th><span class="sr">${esc(L.colStatus)}</span></th><th>${esc(L.colRepo)}</th><th>${esc(L.colJob)}</th><th class="d-runner-col">${esc(L.colRunner)}</th><th>${esc(L.colTime)}</th></tr></thead>`;
+    const sep = running.length && queued.length ? `<tr class="d-sep"><td colspan="5">${esc(L.queuedSep(queued.length))}</td></tr>` : '';
+    return `<table>${head}<tbody>${running.map((it) => depRow(it, multiOwner)).join('')}${sep}${queued.map((it) => depRow(it, multiOwner)).join('')}</tbody></table>`;
+  }
+
+  function chips(kind, label, entries) {
+    if (!entries.length) return '';
+    const buttons = entries
+      .map(([value, count, shown]) => `<button type="button" class="chip" data-f="${kind}" data-v="${esc(value)}" aria-pressed="${filter[kind] === value}">${esc(shown)}<b>${count}</b></button>`)
+      .join('');
+    return `<div class="frow"><span class="flabel">${esc(label)}</span>${buttons}</div>`;
+  }
+
+  // ---------- Ledgers ----------
+  // A pull request seal is a state (ci, changes, approved); an issue seal is the configured label it carries.
+  const labelSeal = (label) => L.labelSeals[label] || label;
+  function seal(key, text) {
+    if (!text) return '<span></span>';
+    const fresh = !seenSeals.has(key);
+    seenSeals.add(key);
+    return `<span class="seal${fresh ? ' fresh' : ''}" role="img" aria-label="${esc(L.sealAria(text))}">${esc(text)}</span>`;
+  }
+
+  function ciCell(ci) {
+    if (ci.state === 'pass') return `<span class="state st-pass">${icons.pass}${esc(L.ciPass)}</span>`;
+    if (ci.state === 'fail') return `<span class="state st-fail">${icons.fail}${esc(ci.failed ? L.ciFailN(ci.failed) : L.ciFail)}</span>`;
+    if (ci.state === 'running') return `<span class="state st-run">${icons.run}${esc(L.ciRun)}</span>`;
+    return `<span class="state st-none">${icons.none}${esc(L.ciNone)}</span>`;
+  }
+
+  function reviewCell(pr) {
+    if (pr.draft) return `<span class="state st-quiet">${esc(L.draft)}</span>`;
+    const r = pr.review;
+    const by = r.by.length ? ` title="${esc(r.by.join(', '))}"` : '';
+    const cls = { approved: 'st-pass', changes: 'st-fail' }[r.state] || 'st-quiet';
+    return `<span class="state ${cls}"${by}>${esc(L[r.state] || r.state)}</span>`;
+  }
+
+  const ref = (it, multiOwner) => `<a class="e-ref mono" href="${safeUrl(it.url)}" target="_blank" rel="noopener" tabindex="-1"><b>${esc(shortRepo(it.repo, multiOwner))}</b>#${esc(it.number)}</a>`;
+  const ageCell = (it) => `<span class="e-age mono" data-age="${esc(it.updatedAt)}" title="${esc(L.lastUpdate(longDate(it.updatedAt)))}">${age(it.updatedAt)}</span>`;
+
+  function prEntry(pr, multiOwner) {
+    const meta = [ref(pr, multiOwner), pr.author ? `<span>${icons.person}${esc(pr.author)}</span>` : '', pr.branch ? `<span class="mono">${icons.branch}${esc(pr.branch)}</span>` : '',
+      pr.labels.length ? `<span class="mono">${esc(pr.labels.join(' · '))}</span>` : ''].join('');
+    return `<li class="entry${pr.seal ? ' sealed' : ''}${pr.draft ? ' draft' : ''}">
+      <div class="e-title"><a href="${safeUrl(pr.url)}" target="_blank" rel="noopener" title="${esc(pr.title)}">${esc(pr.title)}</a><div class="e-meta">${meta}</div></div>
+      <div>${ciCell(pr.ci)}</div>
+      <div class="e-rev">${reviewCell(pr)}</div>
+      ${seal(`pr:${pr.repo}#${pr.number}:${pr.seal}`, pr.seal && L.prSeals[pr.seal])}
+      ${ageCell(pr)}
+    </li>`;
+  }
+
+  function issueEntry(is, multiOwner) {
+    const meta = [ref(is, multiOwner), is.author ? `<span>${icons.person}${esc(is.author)}</span>` : '', is.labels.length ? `<span class="mono">${esc(is.labels.join(' · '))}</span>` : '',
+      is.assignees.length ? `<span>${esc(L.assignee(is.assignees.join(', ')))}</span>` : ''].join('');
+    return `<li class="entry${is.seal ? ' sealed' : ''}">
+      <div class="e-title"><a href="${safeUrl(is.url)}" target="_blank" rel="noopener" title="${esc(is.title)}">${esc(is.title)}</a><div class="e-meta">${meta}</div></div>
+      <span class="e-com mono" title="${esc(L.comments(is.comments))}">${is.comments ? `${icons.comment}${is.comments}` : ''}</span>
+      ${seal(`is:${is.repo}#${is.number}:${is.seal}`, is.seal && labelSeal(is.seal))}
+      ${ageCell(is)}
+    </li>`;
+  }
+
+  function empty(title, text) {
+    return `<div class="l-empty">${icons.empty}<strong>${esc(title)}</strong><span>${esc(text)}</span></div>`;
+  }
+
+  function renderWork(multiOwner) {
+    const w = data.work;
+    $('#workAlert').innerHTML = workAlertHtml(w);
+    const noData = !w.updatedAt;
+    const prs = w.prs, issues = w.issues;
+    $('#prCount').textContent = noData ? '' : num.format(w.prTotal);
+    $('#isCount').textContent = noData ? '' : num.format(w.issueTotal);
+
+    const count = (list, f) => list.filter(f).length;
+    $('#prNote').innerHTML = ['ci', 'changes', 'approved']
+      .map((k) => [k, count(prs, (p) => p.seal === k)])
+      .filter(([, n]) => n)
+      .map(([k, n]) => (k === 'approved' ? esc(L.prNote[k](n)) : `<b>${esc(L.prNote[k](n))}</b>`))
+      .join(', ');
+    const sealed = new Map();
+    for (const i of issues) if (i.seal) sealed.set(i.seal, (sealed.get(i.seal) || 0) + 1);
+    const bugs = count(issues, (i) => i.labels.some((l) => l.toLowerCase() === 'bug'));
+    $('#isNote').innerHTML = [...[...sealed].map(([s, n]) => `<b>${n} ${esc(labelSeal(s).toLocaleLowerCase(LOCALE))}</b>`), bugs && esc(L.bugs(bugs))].filter(Boolean).join(', ');
+
+    const sig = JSON.stringify([prs, issues, w.loading, noData, !!w.error, multiOwner]);
+    if (sig === drawnWork) return;
+    drawnWork = sig;
+
+    if (w.loading || (noData && !w.error)) {
+      $('#prList').innerHTML = empty(L.loadingTitle, L.loadingPrs);
+      $('#isList').innerHTML = empty(L.loadingTitle, L.loadingIssues);
+      return;
+    }
+    if (noData) {
+      $('#prList').innerHTML = empty(L.noDataTitle, L.noDataPrs);
+      $('#isList').innerHTML = empty(L.noDataTitle, L.noDataIssues);
+      return;
+    }
+    const more = (shown, total, what) => (total > shown ? `<li class="more">${esc(L.more(num.format(total - shown), what, shown))}</li>` : '');
+    $('#prList').innerHTML = prs.length
+      ? `<ol>${prs.map((p) => prEntry(p, multiOwner)).join('')}${more(prs.length, w.prTotal, L.prWord)}</ol>`
+      : empty(L.noPrsTitle, L.noPrs);
+    $('#isList').innerHTML = issues.length
+      ? `<ol>${issues.map((i) => issueEntry(i, multiOwner)).join('')}${more(issues.length, w.issueTotal, L.issueWord)}</ol>`
+      : empty(L.noIssuesTitle, L.noIssues);
+  }
+
+  function workAlertHtml(w) {
+    const e = w && w.error;
+    if (!e || unreachable) return '';
+    const kept = w.updatedAt ? L.keptScan(hhmm(w.updatedAt)) : '';
+    const [head, hint] = L.workErrors[e.code] || [L.workFailed, e.message];
+    const reset = e.code === 'rate_limited' && e.resetAt ? L.resetsAt(hhmm(e.resetAt)) : '';
+    const tail = e.code === 'no_token' || e.code === 'bad_token' ? '' : kept;
+    return `<div class="alert" role="alert"><strong>${esc(head)}</strong><span>${esc([hint, reset, tail].filter(Boolean).join(' '))}</span></div>`;
+  }
+
+  // ---------- Drawing ----------
+  function render() {
+    if (!data) {
+      $('#board').innerHTML = `<div id="alert">${alertHtml()}</div>`;
+      if (unreachable) {
+        $('#headline').textContent = L.unreachableHead;
+        $('#subline').textContent = L.unreachableSub;
+      }
+      tick();
+      return;
+    }
+    const all = [...data.running, ...data.queued];
+    const multiOwner = data.owners.length > 1;
+
+    // Drop a filter whose value is no longer on the board
+    const runners = new Map(), repos = new Map();
+    for (const it of all) {
+      const rk = runnerKey(it);
+      if (rk) runners.set(rk, (runners.get(rk) || 0) + 1);
+      repos.set(it.repo, (repos.get(it.repo) || 0) + 1);
+    }
+    if (filter.runner && !runners.has(filter.runner)) filter.runner = null;
+    if (filter.repo && !repos.has(filter.repo)) filter.repo = null;
+    const filtered = !!(filter.runner || filter.repo);
+
+    const pass = (it) => (!filter.runner || runnerKey(it) === filter.runner) && (!filter.repo || it.repo === filter.repo);
+    const running = data.running.filter(pass);
+    const queued = data.queued.filter(pass);
+
+    // Headline: the counts read as a sentence
+    const r = data.running.length, q = data.queued.length;
+    const noData = !data.updatedAt && !!data.error; // no successful scan yet: "no jobs" would mislead
+    let headline;
+    if (data.loading) headline = L.scanning;
+    else if (noData) headline = L.noDataHead;
+    else if (r && q) headline = L.headBoth(r, q);
+    else if (r) headline = L.headRunning(r);
+    else if (q) headline = L.headQueued(q);
+    else headline = L.headIdle;
+    $('#headline').textContent = headline;
+
+    const busy = [...new Set(data.running.map(runnerKey).filter(Boolean))];
+    let sub = data.repoCount ? L.reposScanned(data.repoCount) : '';
+    if (busy.length) sub += ` ${L.busyRunners(busy.join(', '))}`;
+    if (noData) sub = L.noDataSub;
+    $('#subline').textContent = sub.trim() || L.firstScan;
+    $('#scope').textContent = data.owners.join(', ');
+
+    const runnerEntries = [...runners].sort((a, b) => b[1] - a[1]).map(([k, c]) => [k, c, k]);
+    const repoEntries = [...repos].sort((a, b) => b[1] - a[1]).map(([k, c]) => [k, c, shortRepo(k, multiOwner)]);
+    $('#filters').innerHTML = all.length > 1 ? chips('runner', L.filterRunner, runnerEntries) + chips('repo', L.filterRepo, repoEntries) : '';
+
+    // Board: leave the DOM alone unless data, alert or filter changed
+    const alert = alertHtml();
+    const sig = JSON.stringify([running, queued, multiOwner, noData, alert, filtered]);
+    if (sig !== drawn) {
+      drawn = sig;
+      $('#board').innerHTML = `<div id="alert">${alert}</div>` + (noData || data.loading ? '' : departures(running, queued, multiOwner, filtered));
+    }
+
+    renderWork(multiOwner);
+
+    const prs = data.work.updatedAt ? data.work.prTotal : 0;
+    document.title = (r || q ? L.titleCounts(r, q) : '') + (prs ? `${prs} PR · ` : '') + L.appName;
+
+    const parts = [];
+    if (data.rate && data.rate.remaining != null) parts.push(L.restQuota(num.format(data.rate.remaining), num.format(data.rate.limit)));
+    if (data.work.rate) parts.push(L.gqlQuota(num.format(data.work.rate.remaining), num.format(data.work.rate.limit)));
+    if (data.tookMs != null) parts.push(L.actionsScan(secs.format(data.tookMs / 1000), data.intervalSeconds));
+    if (data.work.tookMs != null) parts.push(L.workScan(secs.format(data.work.tookMs / 1000)));
+    if (data.skipped) parts.push(L.skipped(data.skipped));
+    $('#foot').innerHTML = parts.map((p) => `<span>${esc(p)}</span>`).join('');
+
+    tick();
+  }
+
+  function alertHtml() {
+    let text = null;
+    if (unreachable) {
+      text = L.unreachable;
+    } else {
+      const e = data && data.error;
+      if (!e) return '';
+      text = L.errors[e.code] || [L.scanFailed, e.message];
+      if (e.code === 'rate_limited' && e.resetAt) text = [text[0], `${L.resetsAt(hhmm(e.resetAt))} ${text[1]}`];
+    }
+    return `<div class="alert" role="alert"><strong>${esc(text[0])}</strong><span>${esc(text[1])}</span></div>`;
+  }
+
+  let lastAgeTick = 0;
+  function tick() {
+    const now = nowMs();
+    const d = new Date(now);
+    $('#clock').innerHTML = `${pad(d.getHours())}:${pad(d.getMinutes())}<span class="s">:${pad(d.getSeconds())}</span>`;
+    for (const el of document.querySelectorAll('[data-since]')) {
+      el.textContent = clock((now - Date.parse(el.dataset.since)) / 1000);
+    }
+    if (now - lastAgeTick > 30000) {
+      lastAgeTick = now;
+      for (const el of document.querySelectorAll('[data-age]')) el.textContent = age(el.dataset.age);
+    }
+    const live = $('#live');
+    const ago = Math.floor((Date.now() - lastOk) / 1000);
+    if (!lastOk) {
+      live.className = unreachable ? 'live off' : 'live';
+      $('#liveText').textContent = unreachable ? L.disconnected : L.connecting;
+      return;
+    }
+    if (unreachable || ago > 20) { live.className = 'live off'; $('#liveText').textContent = L.disconnected; return; }
+    live.className = 'live ok';
+    $('#liveText').textContent = L.liveAgo(ago);
+  }
+
+  // ---------- Data ----------
+  let polling = false;
+  async function poll(fresh) {
+    if (polling) return;
+    polling = true;
+    try {
+      const res = await fetch('/api/runs' + (fresh ? '?fresh=1' : ''), { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status);
+      data = await res.json();
+      serverOffset = Date.parse(data.now) - Date.now();
+      lastOk = Date.now();
+      unreachable = false;
+    } catch {
+      unreachable = true;
+    } finally {
+      polling = false;
+      render();
+    }
+  }
+
+  // ---------- Events ----------
+  $('#filters').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-f]');
+    if (!b) return;
+    const k = b.dataset.f;
+    filter[k] = filter[k] === b.dataset.v ? null : b.dataset.v;
+    drawn = '';
+    render();
+  });
+  $('#refresh').addEventListener('click', () => poll(true));
+
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t;
+    document.querySelectorAll('[data-theme-set]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.themeSet === t)));
+  }
+  document.querySelectorAll('[data-theme-set]').forEach((b) =>
+    b.addEventListener('click', () => { setTheme(b.dataset.themeSet); store.set('run-panel-theme', b.dataset.themeSet); })
+  );
+  setTheme(['auto', 'light', 'dark'].includes(store.get('run-panel-theme')) ? store.get('run-panel-theme') : 'auto');
+
+  render();
+  poll(false);
+  setInterval(() => poll(false), 4000);
+  setInterval(tick, 1000);
+})();
+</script>
+</body>
+</html>
