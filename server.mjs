@@ -243,14 +243,17 @@ async function listRepos() {
 
 const HARD_ERRORS = new Set(['no_token', 'bad_token', 'network', 'rate_limited']);
 
+const ACTIVE_RUN_STATUSES = ['in_progress', 'queued', 'pending', 'waiting', 'requested'];
+
 async function sweepRepo(repo) {
   const runsPath = `/repos/${repo.full_name}/actions/runs`;
-  const [inProgress, queued] = await Promise.all([
-    api(`${runsPath}?status=in_progress&per_page=50`),
-    api(`${runsPath}?status=queued&per_page=50`),
-  ]);
+  // A run with a job held by a concurrency group reports `pending`, and one held by an
+  // environment approval reports `waiting`; both still have running and queued jobs.
+  const pages = await Promise.all(
+    ACTIVE_RUN_STATUSES.map((status) => api(`${runsPath}?status=${status}&per_page=50`)),
+  );
   const runs = new Map();
-  for (const r of [...(inProgress.workflow_runs || []), ...(queued.workflow_runs || [])]) runs.set(r.id, r);
+  for (const r of pages.flatMap((p) => p.workflow_runs || [])) runs.set(r.id, r);
 
   const items = [];
   await pool([...runs.values()], 6, async (run) => {
@@ -292,7 +295,7 @@ async function sweepRepo(repo) {
         since: (running ? j.started_at : j.created_at) || run.created_at,
       });
     }
-    if (!open && run.status === 'queued') {
+    if (!open && run.status !== 'in_progress') {
       // The run is queued but its jobs do not exist yet
       items.push({
         ...common,
